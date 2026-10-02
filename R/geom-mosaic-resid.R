@@ -108,6 +108,10 @@ geom_mosaic_resid <- function(mapping = NULL, data = NULL,
     )))
   }
 
-  if (length(out) == 1) return(out[[1]])
-  out
+  # Always return a classed list, even when it holds a single layer --
+  # the mosaicresid_layers class is what triggers the auto-weight-by-Freq
+  # behavior in ggplot_add.mosaicresid_layers() when this is added with `+`
+  # to a plot built from a table (via fortify.table()). Collapsing to a bare
+  # Layer here would silently skip that behavior.
+  structure(out, class = "mosaicresid_layers")
 }
