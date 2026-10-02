@@ -34,7 +34,7 @@ StatMosaicResidual <- ggplot2::ggproto("StatMosaicResidual", ggplot2::Stat,
 
 #' Compute mosaic tiles and independence residuals as a ggplot2 stat
 #'
-#' The stat underlying [geom_mosaic_residual()]'s rectangles. Use this
+#' The stat underlying [geom_mosaic_resid()]'s rectangles. Use this
 #' directly if you want to pair the mosaic-residual computation with a geom
 #' other than `GeomRect`.
 #'

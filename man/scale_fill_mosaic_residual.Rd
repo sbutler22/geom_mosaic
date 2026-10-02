@@ -22,7 +22,7 @@ independence).}
 
 \item{name}{Legend title.}
 
-\item{...}{Passed on to \code{\link[ggplot2:scale_gradient]{ggplot2::scale_fill_gradient2()}}.}
+\item{...}{Passed on to \code{\link[ggplot2:scale_fill_gradient2]{ggplot2::scale_fill_gradient2()}}.}
 }
 \value{
 A ggplot2 \code{ScaleContinuous} object.
@@ -43,6 +43,6 @@ df <- data.frame(
   platform = sample(c("PS", "Switch"), 200, replace = TRUE)
 )
 ggplot(df) +
-  geom_mosaic_residual(aes(x = genre, y = platform), default_scale = FALSE) +
+  geom_mosaic_resid(aes(x = genre, y = platform), default_scale = FALSE) +
   scale_fill_mosaic_residual()
 }

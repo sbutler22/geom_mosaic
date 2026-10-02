@@ -37,7 +37,7 @@ geom is mapped:
 
 ```{r}
 ggplot(mtcars) +
-  geom_mosaic_residual(aes(x = factor(cyl), y = factor(am))) +
+  geom_mosaic_resid(aes(x = factor(cyl), y = factor(am))) +
   theme_minimal() +
   labs(title = "Cylinders vs Transmission", x = NULL, y = NULL)
 ```
@@ -60,7 +60,7 @@ No manual `stat_*()` call, no manual residual computation, no manual scale.
 
 ## Working with raw or pre-aggregated data
 
-`geom_mosaic_residual()` accepts either shape of input, through the same
+`geom_mosaic_resid()` accepts either shape of input, through the same
 code path. One row per observation:
 
 ```{r}
@@ -68,7 +68,7 @@ titanic_raw <- as.data.frame(Titanic)
 titanic_raw <- titanic_raw[rep(seq_len(nrow(titanic_raw)), titanic_raw$Freq), ]
 
 ggplot(titanic_raw) +
-  geom_mosaic_residual(aes(x = Class, y = Survived)) +
+  geom_mosaic_resid(aes(x = Class, y = Survived)) +
   theme_minimal()
 ```
 
@@ -79,12 +79,12 @@ titanic_counts <- as.data.frame(Titanic)
 titanic_counts <- aggregate(Freq ~ Class + Survived, titanic_counts, sum)
 
 ggplot(titanic_counts) +
-  geom_mosaic_residual(aes(x = Class, y = Survived), weight = "Freq") +
+  geom_mosaic_resid(aes(x = Class, y = Survived), weight = "Freq") +
   theme_minimal()
 ```
 
 (`weight` is passed through `...` to `stat_mosaic_residual()`/`stat_mosaic_label()`;
-it isn't a literal `geom_mosaic_residual()` argument, so it works the same way
+it isn't a literal `geom_mosaic_resid()` argument, so it works the same way
 `weight` works for any other `ggplot2` stat.)
 
 ## Overriding the color scale
@@ -94,7 +94,7 @@ the usual way -- and labels keep working fine when you do:
 
 ```{r}
 ggplot(mtcars) +
-  geom_mosaic_residual(aes(x = factor(cyl), y = factor(am))) +
+  geom_mosaic_resid(aes(x = factor(cyl), y = factor(am))) +
   scale_fill_gradient2(low = "purple", mid = "white", high = "darkgreen") +
   theme_minimal()
 ```
@@ -103,7 +103,7 @@ ggplot(mtcars) +
 
 ```{r}
 ggplot(mtcars) +
-  geom_mosaic_residual(
+  geom_mosaic_resid(
     aes(x = factor(cyl), y = factor(gear)),
     spacing = 0.02,
     min_label_width = 0.04,
@@ -126,7 +126,7 @@ supported here with the same semantics:
 
 ```{r}
 ggplot(mtcars) +
-  geom_mosaic_residual(
+  geom_mosaic_resid(
     aes(x = factor(cyl), y = factor(am)),
     dir = c("h", "v"),   # swap which variable splits vertically first
     type = "deviance"    # pearson (default), deviance, or FT (Freeman-Tukey)

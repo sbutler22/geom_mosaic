@@ -45,15 +45,15 @@
 #' # colors, spacing, and labels all come for free -- no manual
 #' # scale_fill_gradient2() call needed, it's the default
 #' ggplot(df) +
-#'   geom_mosaic_residual(aes(x = genre, y = platform)) +
+#'   geom_mosaic_resid(aes(x = genre, y = platform)) +
 #'   theme_minimal()
 #'
 #' # the default scale is fully overridable like any ggplot2 layer
 #' ggplot(df) +
-#'   geom_mosaic_residual(aes(x = genre, y = platform)) +
+#'   geom_mosaic_resid(aes(x = genre, y = platform)) +
 #'   scale_fill_gradient2(low = "purple", mid = "white", high = "darkgreen") +
 #'   theme_minimal()
-geom_mosaic_residual <- function(mapping = NULL, data = NULL,
+geom_mosaic_resid <- function(mapping = NULL, data = NULL,
                                   stat = "mosaic_residual", position = "identity",
                                   na.rm = FALSE, show.legend = NA,
                                   inherit.aes = TRUE, spacing = 0.01, label = TRUE,
@@ -98,7 +98,7 @@ geom_mosaic_residual <- function(mapping = NULL, data = NULL,
   }
 
   # Default fill scale -- still a normal ggplot2 scale object, so the user
-  # can override it the usual way: geom_mosaic_residual(...) +
+  # can override it the usual way: geom_mosaic_resid(...) +
   # scale_fill_gradient2(...) (ggplot2 will just note the scale is being
   # replaced). Passing a literal `fill = ` through `...` (like any ggplot2
   # geom) hardcodes a constant color instead, same as usual.

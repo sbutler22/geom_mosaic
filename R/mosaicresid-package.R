@@ -1,13 +1,13 @@
 #' mosaicresid: Residual-Shaded Mosaic Plots for ggplot2
 #'
 #' A ggplot2-native alternative to base R's `mosaicplot(shade = TRUE)`.
-#' [geom_mosaic_residual()] takes two categorical variables mapped the usual
+#' [geom_mosaic_resid()] takes two categorical variables mapped the usual
 #' ggplot2 way, `aes(x =, y =)`, recursively partitions the unit square into
 #' tiles sized by their joint proportions, computes independence-model
 #' residuals, and maps them to fill color automatically.
 #'
 #' @section Main functions:
-#' - [geom_mosaic_residual()] -- the all-in-one layer: tiles, in-tile labels,
+#' - [geom_mosaic_resid()] -- the all-in-one layer: tiles, in-tile labels,
 #'   and a default diverging color scale.
 #' - [stat_mosaic_residual()] / [stat_mosaic_label()] -- the underlying stats,
 #'   if you want to pair them with a different geom.

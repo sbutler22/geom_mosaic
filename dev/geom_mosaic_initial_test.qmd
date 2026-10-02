@@ -426,9 +426,9 @@ scale_fill_mosaic_residual <- function(low = "firebrick", mid = "white", high = 
                                  midpoint = midpoint, name = name, ...)
 }
 
-#' geom_mosaic_residual()
+#' geom_mosaic_resid()
 #'
-#' Convenience wrapper: geom_mosaic_residual(aes(x = Genre, y = Platform)).
+#' Convenience wrapper: geom_mosaic_resid(aes(x = Genre, y = Platform)).
 #' Returns a LIST of layers -- the rectangles (GeomRect), in-tile category
 #' labels (GeomText), and a default red-white-blue colour scale -- so a
 #' single call gives you all three. ggplot2 natively supports `+`-ing a
@@ -447,7 +447,7 @@ scale_fill_mosaic_residual <- function(low = "firebrick", mid = "white", high = 
 #'   the default scale (scale_fill_mosaic_residual())
 #' @inheritParams ggplot2::geom_rect
 #' @export
-geom_mosaic_residual <- function(mapping = NULL, data = NULL,
+geom_mosaic_resid <- function(mapping = NULL, data = NULL,
                                   stat = "mosaic_residual", position = "identity",
                                   na.rm = FALSE, show.legend = NA,
                                   inherit.aes = TRUE, spacing = 0.01, label = TRUE,
@@ -490,7 +490,7 @@ geom_mosaic_residual <- function(mapping = NULL, data = NULL,
   }
 
   # Default fill scale -- still a normal ggplot2 scale object, so the user
-  # can override it the usual way: geom_mosaic_residual(...) +
+  # can override it the usual way: geom_mosaic_resid(...) +
   # scale_fill_gradient2(...) (ggplot2 will just note the scale is being
   # replaced). Passing a literal `fill = ` through `...` (like any ggplot2
   # geom) hardcodes a constant colour instead, same as usual.
@@ -512,7 +512,7 @@ geom_mosaic_residual <- function(mapping = NULL, data = NULL,
 # colors, spacing, and labels all come for free now -- no manual
 # scale_fill_gradient2() call needed, it's the default
 ggplot(small_games) +
-  geom_mosaic_residual(
+  geom_mosaic_resid(
     aes(x = Genre, y = Platform),
     spacing = 0.015,
     min_label_width = 0.03,
@@ -529,7 +529,7 @@ ggplot(small_games) +
 # example was just because that demo had set label = FALSE, not a side
 # effect of overriding the scale itself
 ggplot(small_games) +
-  geom_mosaic_residual(
+  geom_mosaic_resid(
     aes(x = Genre, y = Platform),
     spacing = 0.015,
     min_label_width = 0.03,

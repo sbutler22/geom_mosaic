@@ -7,7 +7,7 @@
 \title{mosaicresid: Residual-Shaded Mosaic Plots for ggplot2}
 \description{
 A ggplot2-native alternative to base R's \code{mosaicplot(shade = TRUE)}.
-\code{\link[=geom_mosaic_residual]{geom_mosaic_residual()}} takes two categorical variables mapped the usual
+\code{\link[=geom_mosaic_resid]{geom_mosaic_resid()}} takes two categorical variables mapped the usual
 ggplot2 way, \code{aes(x =, y =)}, recursively partitions the unit square into
 tiles sized by their joint proportions, computes independence-model
 residuals, and maps them to fill color automatically.
@@ -15,7 +15,7 @@ residuals, and maps them to fill color automatically.
 \section{Main functions}{
 
 \itemize{
-\item \code{\link[=geom_mosaic_residual]{geom_mosaic_residual()}} -- the all-in-one layer: tiles, in-tile labels,
+\item \code{\link[=geom_mosaic_resid]{geom_mosaic_resid()}} -- the all-in-one layer: tiles, in-tile labels,
 and a default diverging color scale.
 \item \code{\link[=stat_mosaic_residual]{stat_mosaic_residual()}} / \code{\link[=stat_mosaic_label]{stat_mosaic_label()}} -- the underlying stats,
 if you want to pair them with a different geom.
@@ -30,13 +30,18 @@ usable standalone.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/yourusername/mosaicresid}
-  \item Report bugs at \url{https://github.com/yourusername/mosaicresid/issues}
+  \item \url{https://github.com/sbutler22/geom_mosaic}
+  \item Report bugs at \url{https://github.com/sbutler22/geom_mosaic/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Your Name \email{you@example.com}
+\strong{Maintainer}: Sam Butler \email{sambutle@andrew.cmu.edu}
+
+Authors:
+\itemize{
+  \item Sam Butler \email{sambutle@andrew.cmu.edu}
+}
 
 }
 \keyword{internal}

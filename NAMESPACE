@@ -3,7 +3,7 @@
 export(StatMosaicLabel)
 export(StatMosaicResidual)
 export(compute_mosaic_residuals)
-export(geom_mosaic_residual)
+export(geom_mosaic_resid)
 export(scale_fill_mosaic_residual)
 export(stat_mosaic_label)
 export(stat_mosaic_residual)

@@ -7,11 +7,11 @@ library(mosaicresid)
 library(ggplot2)
 
 ggplot(mtcars) +
-  geom_mosaic_residual(aes(x = factor(cyl), y = factor(am))) +
+  geom_mosaic_resid(aes(x = factor(cyl), y = factor(am))) +
   theme_minimal()
 ```
 
-`geom_mosaic_residual()` takes two categorical variables mapped the usual
+`geom_mosaic_resid()` takes two categorical variables mapped the usual
 `ggplot2` way, `aes(x =, y =)`, and automatically:
 
 - Recursively partitions the unit square into tiles sized by joint

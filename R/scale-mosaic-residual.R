@@ -23,7 +23,7 @@
 #'   platform = sample(c("PS", "Switch"), 200, replace = TRUE)
 #' )
 #' ggplot(df) +
-#'   geom_mosaic_residual(aes(x = genre, y = platform), default_scale = FALSE) +
+#'   geom_mosaic_resid(aes(x = genre, y = platform), default_scale = FALSE) +
 #'   scale_fill_mosaic_residual()
 scale_fill_mosaic_residual <- function(low = "firebrick", mid = "white", high = "steelblue",
                                         midpoint = 0, name = "Residual", ...) {

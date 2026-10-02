@@ -1,6 +1,6 @@
 #' Compute mosaic tile geometry and independence residuals
 #'
-#' The plain-data-frame engine behind [geom_mosaic_residual()], with no
+#' The plain-data-frame engine behind [geom_mosaic_resid()], with no
 #' ggplot2 involved: converts `data` to long-format counts, recursively
 #' partitions the unit square into tiles sized by joint proportion, and
 #' attaches independence-model residuals to each tile. Returned as an

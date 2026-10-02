@@ -41,7 +41,7 @@ the \code{x}/\code{y} category columns, \code{row_total}/\code{col_total}/\code{
 \code{residual}.
 }
 \description{
-The plain-data-frame engine behind \code{\link[=geom_mosaic_residual]{geom_mosaic_residual()}}, with no
+The plain-data-frame engine behind \code{\link[=geom_mosaic_resid]{geom_mosaic_resid()}}, with no
 ggplot2 involved: converts \code{data} to long-format counts, recursively
 partitions the unit square into tiles sized by joint proportion, and
 attaches independence-model residuals to each tile. Returned as an

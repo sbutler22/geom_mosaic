@@ -50,7 +50,7 @@ StatMosaicLabel <- ggplot2::ggproto("StatMosaicLabel", ggplot2::Stat,
 
 #' Compute in-tile mosaic labels as a ggplot2 stat
 #'
-#' The stat underlying [geom_mosaic_residual()]'s in-tile category labels.
+#' The stat underlying [geom_mosaic_resid()]'s in-tile category labels.
 #' Use this directly if you want the labels without the default rectangles
 #' and fill scale.
 #'
@@ -59,7 +59,7 @@ StatMosaicLabel <- ggplot2::ggproto("StatMosaicLabel", ggplot2::Stat,
 #'   warning; if `TRUE`, missing values are silently removed.
 #' @param spacing Gap between sibling tiles, as a fraction of their parent's
 #'   dimension -- must match whatever `spacing` was passed to the paired
-#'   `stat_mosaic_residual()`/`geom_mosaic_residual()` call, so labels land
+#'   `stat_mosaic_residual()`/`geom_mosaic_resid()` call, so labels land
 #'   on the same rectangles.
 #' @param min_label_width,min_label_height Minimum cell width/height (in 0-1
 #'   fractional plot units) required for a label to be drawn at all. Tune
@@ -67,7 +67,7 @@ StatMosaicLabel <- ggplot2::ggproto("StatMosaicLabel", ggplot2::Stat,
 #'   larger thresholds to avoid overflow.
 #' @param dir Optional character vector of `"v"`/`"h"` forcing split
 #'   direction per level -- must match whatever `dir` was passed to the
-#'   paired `stat_mosaic_residual()`/`geom_mosaic_residual()` call, so
+#'   paired `stat_mosaic_residual()`/`geom_mosaic_resid()` call, so
 #'   labels land on the same rectangles. `NULL` (default) alternates v/h.
 #' @export
 #' @examples
