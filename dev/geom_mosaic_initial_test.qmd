@@ -1,0 +1,543 @@
+---
+title: "initial_investigations"
+format: html
+---
+
+I'm trying to figure out whether it is possible to make a good `gg` style alternative to base R's mosaic plot. 
+
+```{r}
+library(tidyverse)
+```
+
+
+## Base R example
+
+```{r}
+# data
+games_data <- 
+  read_csv("https://raw.githubusercontent.com/ryurko/DataViz-Class-Data/main/vgsales.csv")
+
+# filter
+small_games <- games_data |>
+  filter(Platform %in% c("PS3", "X360", "Wii"))
+
+# create table of counts
+genre_platform_table <- table(small_games$Genre, small_games$Platform)
+genre_platform_table
+
+
+# plot
+# mess with margins so labels aren't cut off
+par(mar = c(1, 6, 4, 2)) 
+
+mosaicplot(genre_platform_table,
+           shade = TRUE, # colors based on Pearson Residual
+           las = 2,
+           cex.axis = 0.35,
+           main = "Mosaic Plot of Genre vs Platform (Pearson Residuals)",
+           xlab = "Genre",
+           ylab = "Platform")
+```
+
+
+## code 
+
+First we need to figure out how to calculate the size for the boxes. That means finding the marginal proportions between the columns then the conditional proportions of each row. Usually this stops after two, but if we want to make the plot for more than two variables then it should be set up to continually calculate joint proportions of each variable.
+
+step 0: one rectangle, [0,1] x [0,1], representing "everything"
+step 1: split that rectangle by var_1's marginal proportions
+        -> one rectangle per category of var_1
+step 2: for EACH rectangle from step 1, split it by var_2's
+        proportions CONDITIONAL on that var_1 category
+        -> one rectangle per (var_1, var_2) combo
+step 3: for EACH rectangle from step 2, split by var_3's
+        proportions conditional on (var_1, var_2)
+        -> one rectangle per (var_1, var_2, var_3) combo
+...
+step k: done.
+
+### convert data for appropriate format
+
+```{r}
+#' Convert raw or pre-aggregated data into long-format counts
+#'
+#' @param data a data frame — either one row per observation, or
+#'   already aggregated with an existing count/weight column
+#' @param x,y strings naming the two grouping variables
+#' @param weight optional string naming an existing count column.
+#'   Leave NULL if `data` is one-row-per-observation.
+to_long_counts <- function(data, x, y, weight = NULL) {
+
+  count_var <- "..mosaic_n.."
+
+  if (count_var %in% c(x, y)) {
+    stop(
+      "Column name '", count_var, "' is reserved for internal use by this ",
+      "package and cannot be used as `x` or `y`.",
+      call. = FALSE
+    )
+  }
+
+  # match base R's table()/mosaicplot() default (useNA = "no"): rows with
+  # NA in either grouping variable are silently excluded, not counted as
+  # their own category
+  data <- data[!is.na(data[[x]]) & !is.na(data[[y]]), , drop = FALSE]
+
+  # drop unused factor levels (or coerce non-factor types to character)
+  # so phantom zero-total categories never enter the count/partition step
+  data[[x]] <- droplevels(as.factor(data[[x]]))
+  data[[y]] <- droplevels(as.factor(data[[y]]))
+
+  # IMPORTANT: branch on `weight` in plain R code, outside the tidy-eval
+  # call. dplyr::count()'s `wt` argument decides "no weighting" by checking
+  # whether the *expression itself* is the literal symbol NULL — not by
+  # evaluating it and checking the result. An `if/else` expression that
+  # merely evaluates to NULL is NOT recognized as "no weight," so dplyr
+  # falls through to summing an (empty) weight vector, giving 0 for every
+  # row. Passing a truly bare `NULL` (by omitting `wt` entirely) or a real
+  # column reference are the only two cases that behave correctly.
+  if (is.null(weight)) {
+    result <- dplyr::count(data, .data[[x]], .data[[y]], name = count_var)
+  } else {
+    result <- dplyr::count(data, .data[[x]], .data[[y]], wt = .data[[weight]], name = count_var)
+  }
+
+  names(result)[names(result) == count_var] <- "n"
+  result
+}
+```
+
+### calculate proportions for rectangle sizes
+
+```{r}
+#' Carve a sub-rectangle out of a parent rectangle
+#'
+#' @param bounds named numeric vector: xmin, xmax, ymin, ymax
+#' @param prop proportion of the parent rectangle this slice occupies (0-1)
+#' @param offset cumulative proportion of prior slices (0-1) — where this
+#'   slice starts within the parent
+#' @param direction "v" = split left-to-right (varies x, y unchanged),
+#'   "h" = split bottom-to-top (varies y, x unchanged)
+carve <- function(bounds, prop, offset, direction) {
+  if (direction == "v") {
+    width <- bounds["xmax"] - bounds["xmin"]
+    c(
+      xmin = unname(bounds["xmin"] + offset * width),
+      xmax = unname(bounds["xmin"] + (offset + prop) * width),
+      ymin = unname(bounds["ymin"]),
+      ymax = unname(bounds["ymax"])
+    )
+  } else {
+    height <- bounds["ymax"] - bounds["ymin"]
+    c(
+      xmin = unname(bounds["xmin"]),
+      xmax = unname(bounds["xmax"]),
+      ymin = unname(bounds["ymin"] + offset * height),
+      ymax = unname(bounds["ymin"] + (offset + prop) * height)
+    )
+  }
+}
+
+#' Convert a vector of sibling proportions into gap-adjusted [start, width]
+#' extents (as fractions of the parent rectangle's dimension)
+#'
+#' @param props numeric vector of proportions summing to 1
+#' @param spacing gap size (as a fraction of the parent's dimension)
+#'   inserted between each pair of adjacent siblings
+compute_slice_extents <- function(props, spacing = 0) {
+  n <- length(props)
+  total_gap <- spacing * (n - 1)
+  avail <- 1 - total_gap
+
+  if (avail <= 0) {
+    stop(
+      "`spacing` is too large for ", n, " categories at this split -- ",
+      "gaps alone would consume the whole rectangle. Reduce `spacing`.",
+      call. = FALSE
+    )
+  }
+
+  widths <- avail * props
+  starts <- cumsum(c(0, widths[-n])) + spacing * (seq_len(n) - 1)
+  tibble::tibble(start = starts, width = widths)
+}
+
+#' Recursively partition a rectangle by successive conditional splits
+#'
+#' @param data a data frame, one row per observation (or pre-aggregated with `weight`)
+#' @param vars character vector of variable names to split on, in order
+#' @param weight optional string naming a count/weight column; if NULL, each row counts as 1
+#' @param bounds named numeric vector xmin/xmax/ymin/ymax for the current rectangle
+#' @param level current recursion depth (used to alternate split direction)
+#' @param labels named list accumulating the category chosen at each prior level
+#' @param spacing gap size (fraction of each split's dimension) between
+#'   sibling rectangles at every level. 0 = no gap.
+partition_rects <- function(data, vars, weight = NULL,
+                             bounds = c(xmin = 0, xmax = 1, ymin = 0, ymax = 1),
+                             level = 0, labels = list(), spacing = 0.01) {
+
+  wt_vec <- if (is.null(weight)) rep(1, nrow(data)) else data[[weight]]
+
+  if (length(vars) == 0) {
+    out <- tibble::as_tibble(as.list(bounds))
+    out$n <- sum(wt_vec)
+    out$level <- level
+    for (nm in names(labels)) out[[nm]] <- labels[[nm]]
+    return(out)
+  }
+
+  this_var <- vars[1]
+
+  splits <- data |>
+    dplyr::mutate(.weight__ = wt_vec) |>
+    dplyr::count(.data[[this_var]], wt = .weight__, name = "n") |>
+    dplyr::mutate(prop = n / sum(n))
+
+  extents <- compute_slice_extents(splits$prop, spacing)
+  splits$offset <- extents$start
+  splits$prop   <- extents$width   # gap-adjusted width replaces raw proportion
+
+  direction <- if (level %% 2 == 0) "v" else "h"
+
+  purrr::map_dfr(seq_len(nrow(splits)), function(i) {
+    sub_bounds <- carve(bounds, splits$prop[i], splits$offset[i], direction)
+    cat_val    <- splits[[this_var]][i]
+    sub_data <- data[data[[this_var]] == cat_val, , drop = FALSE]
+    sub_labels <- labels
+    sub_labels[[this_var]] <- cat_val
+    partition_rects(sub_data, vars[-1], weight, sub_bounds, level + 1, sub_labels, spacing)
+  })
+}
+```
+
+### calculate residuals
+
+```{r}
+#' @param cell_table output of partition_rects(), one row per (var1, var2) cell
+#' @param N total sample size; defaults to sum(n), override only if you have
+#'   a specific reason (e.g. residuals relative to a different total)
+add_independence_residuals <- function(cell_table, var1, var2, N = sum(cell_table$n)) {
+
+  expected_rows <- dplyr::n_distinct(cell_table[[var1]]) * dplyr::n_distinct(cell_table[[var2]])
+  if (nrow(cell_table) != expected_rows) {
+    stop(
+      "add_independence_residuals() only supports a 2-way table. ",
+      "cell_table has ", nrow(cell_table), " rows but ", var1, " x ", var2,
+      " implies ", expected_rows, " -- looks like more variables are present.\n",
+      "n-way residuals aren't implemented yet -- for now, fit your own ",
+      "loglinear model (e.g. stats::loglm() or glm(family = poisson)) and ",
+      "compute expected counts / residuals manually. Native n-way support ",
+      "may be added in a future version.",
+      call. = FALSE
+    )
+  }
+
+  cell_table |>
+    dplyr::group_by(.data[[var1]]) |> dplyr::mutate(row_total = sum(n)) |> dplyr::ungroup() |>
+    dplyr::group_by(.data[[var2]]) |> dplyr::mutate(col_total = sum(n)) |> dplyr::ungroup() |>
+    dplyr::mutate(
+      expected = row_total * col_total / N,
+      residual = (n - expected) / sqrt(expected)
+    )
+}
+```
+
+### wrapper function for the three functions above, format data, calculate rectangle proportions, calculate residuals
+
+```{r}
+#' Compute mosaic rectangles with independence residuals, from raw or
+#' pre-aggregated data
+#'
+#' @param data a data frame
+#' @param x,y strings naming the two grouping variables
+#' @param weight optional string naming an existing count column
+#' @param spacing gap size (fraction of each split's dimension) between
+#'   sibling rectangles at every level, passed through to partition_rects()
+compute_mosaic_residuals <- function(data, x, y, weight = NULL, spacing = 0.01) {
+  counts <- to_long_counts(data, x, y, weight)
+  rects  <- partition_rects(counts, vars = c(x, y), weight = "n", spacing = spacing)
+  add_independence_residuals(rects, x, y)
+}
+```
+
+### ggplot layer
+
+```{r}
+#' Internal: move x/y out of the way of ggplot2's real position aesthetic
+#' before the layer's mapping is inspected for scale-training purposes.
+#' Without this, ggplot2 sees the raw categorical Genre/Platform values at
+#' mapping time and locks the x/y scales as discrete -- then chokes when the
+#' stat hands back continuous xmin/xmax/ymin/ymax.
+remap_mosaic_aes <- function(mapping) {
+  if (!is.null(mapping$x)) {
+    mapping$catx <- mapping$x
+    mapping$x <- NULL
+  }
+  if (!is.null(mapping$y)) {
+    mapping$caty <- mapping$y
+    mapping$y <- NULL
+  }
+  mapping
+}
+
+#' StatMosaicResidual
+#'
+#' Takes discrete catx/caty aesthetics (and optional weight), computes
+#' mosaic rectangles + independence residuals, and hands
+#' xmin/xmax/ymin/ymax + residual off to a geom (GeomRect by default).
+#'
+#' @format NULL
+#' @usage NULL
+StatMosaicResidual <- ggplot2::ggproto("StatMosaicResidual", ggplot2::Stat,
+
+  required_aes = c("catx", "caty"),
+
+  # so users get residual-based fill for free, without writing
+  # aes(fill = after_stat(residual)) themselves
+  default_aes = ggplot2::aes(fill = ggplot2::after_stat(residual)),
+
+  compute_panel = function(data, scales, spacing = 0.01) {
+
+    if (!"weight" %in% names(data)) data$weight <- 1
+
+    rects <- compute_mosaic_residuals(data, "catx", "caty", weight = "weight", spacing = spacing)
+
+    rects$PANEL <- data$PANEL[1]
+    rects$group <- seq_len(nrow(rects))  # each cell draws as its own rect
+
+    rects
+  }
+)
+
+#' StatMosaicLabel
+#'
+#' Computes label text + centroid position for each mosaic cell, so category
+#' names can be drawn directly inside their rectangles. This sidesteps a real
+#' constraint of mosaic plots: the inner variable's split positions differ
+#' from column to column (they're conditional on the outer variable), so
+#' there's no single shared y-axis tick that's correct for the whole plot.
+#' In-tile labels are the structurally correct fix, not a workaround.
+#'
+#' Cells smaller than min_label_width/min_label_height (in the same 0-1
+#' fractional units as xmin/xmax/ymin/ymax) are dropped from the label set
+#' entirely -- they still get colored by the rect layer, just no text
+#' crammed into a sliver. These are exposed as tunable parameters because
+#' the "right" threshold depends on plot size, font size, and label text
+#' length, not on the data alone.
+#'
+#' @format NULL
+#' @usage NULL
+StatMosaicLabel <- ggplot2::ggproto("StatMosaicLabel", ggplot2::Stat,
+
+  required_aes = c("catx", "caty"),
+
+  compute_panel = function(data, scales, spacing = 0.01,
+                            min_label_width = 0.02, min_label_height = 0.03) {
+
+    if (!"weight" %in% names(data)) data$weight <- 1
+
+    rects <- compute_mosaic_residuals(data, "catx", "caty", weight = "weight", spacing = spacing)
+
+    rects$x <- (rects$xmin + rects$xmax) / 2
+    rects$y <- (rects$ymin + rects$ymax) / 2
+    rects$label <- paste(rects$catx, rects$caty, sep = "\n")
+
+    # drop labels for cells too small to hold text legibly -- the color
+    # still shows, there's just no text crammed into a sliver
+    width  <- rects$xmax - rects$xmin
+    height <- rects$ymax - rects$ymin
+    rects <- rects[width >= min_label_width & height >= min_label_height, , drop = FALSE]
+
+    rects$PANEL <- data$PANEL[1]
+    rects$group <- seq_len(nrow(rects))
+
+    rects
+  }
+)
+
+#' stat_mosaic_residual()
+#'
+#' @inheritParams ggplot2::stat_identity
+#' @param spacing gap between sibling tiles, as a fraction of their parent's dimension
+#' @export
+stat_mosaic_residual <- function(mapping = NULL, data = NULL, geom = "rect",
+                                  position = "identity", na.rm = FALSE,
+                                  spacing = 0.01,
+                                  show.legend = NA, inherit.aes = TRUE, ...) {
+  mapping <- remap_mosaic_aes(mapping)
+  ggplot2::layer(
+    stat = StatMosaicResidual,
+    data = data,
+    mapping = mapping,
+    geom = geom,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, spacing = spacing, ...)
+  )
+}
+
+#' stat_mosaic_label()
+#'
+#' @inheritParams ggplot2::stat_identity
+#' @param spacing gap between sibling tiles, as a fraction of their parent's dimension
+#' @param min_label_width,min_label_height minimum cell width/height (in
+#'   0-1 fractional plot units) required for a label to be drawn at all.
+#'   Tune these per-plot: smaller plots or longer category names typically
+#'   need larger thresholds to avoid overflow.
+#' @export
+stat_mosaic_label <- function(mapping = NULL, data = NULL, geom = "text",
+                               position = "identity", na.rm = FALSE,
+                               spacing = 0.01, min_label_width = 0.02,
+                               min_label_height = 0.03,
+                               show.legend = FALSE, inherit.aes = TRUE, ...) {
+  mapping <- remap_mosaic_aes(mapping)
+  ggplot2::layer(
+    stat = StatMosaicLabel,
+    data = data,
+    mapping = mapping,
+    geom = geom,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, spacing = spacing,
+                  min_label_width = min_label_width,
+                  min_label_height = min_label_height, ...)
+  )
+}
+
+#' scale_fill_mosaic_residual()
+#'
+#' Default diverging fill scale for mosaic residuals: a continuous
+#' red-white-blue gradient (red = negative residual / under-represented,
+#' blue = positive / over-represented), rather than base R's discrete
+#' HSV-stepped bins. Chosen as the default because it reads better alongside
+#' in-tile labels -- there's no hard color-bin boundary cutting across a
+#' cell's text the way base R's stepped bins can.
+#'
+#' @param low,mid,high colors for the most negative, zero, and most positive
+#'   residual
+#' @param midpoint residual value treated as the color midpoint (0 = independence)
+#' @param name legend title
+#' @export
+scale_fill_mosaic_residual <- function(low = "firebrick", mid = "white", high = "steelblue",
+                                        midpoint = 0, name = "Residual", ...) {
+  ggplot2::scale_fill_gradient2(low = low, mid = mid, high = high,
+                                 midpoint = midpoint, name = name, ...)
+}
+
+#' geom_mosaic_residual()
+#'
+#' Convenience wrapper: geom_mosaic_residual(aes(x = Genre, y = Platform)).
+#' Returns a LIST of layers -- the rectangles (GeomRect), in-tile category
+#' labels (GeomText), and a default red-white-blue colour scale -- so a
+#' single call gives you all three. ggplot2 natively supports `+`-ing a
+#' list of layers/scales onto a plot, so this composes just like a normal
+#' single-layer geom would.
+#'
+#' @param label set to FALSE to get only the rectangles, no text labels
+#' @param spacing gap between sibling tiles, as a fraction of their parent's dimension
+#' @param min_label_width,min_label_height minimum cell width/height (0-1
+#'   fractional units) required for a label to be drawn; smaller cells are
+#'   colored but left unlabeled rather than overflowing
+#' @param label.size,label.color passed through to the label's geom_text layer
+#' @param default_scale set FALSE to skip the built-in colour scale entirely
+#'   (e.g. if you always add your own)
+#' @param scale_low,scale_mid,scale_high,scale_midpoint passed through to
+#'   the default scale (scale_fill_mosaic_residual())
+#' @inheritParams ggplot2::geom_rect
+#' @export
+geom_mosaic_residual <- function(mapping = NULL, data = NULL,
+                                  stat = "mosaic_residual", position = "identity",
+                                  na.rm = FALSE, show.legend = NA,
+                                  inherit.aes = TRUE, spacing = 0.01, label = TRUE,
+                                  min_label_width = 0.02, min_label_height = 0.03,
+                                  label.size = 3, label.color = "black",
+                                  default_scale = TRUE,
+                                  scale_low = "firebrick", scale_mid = "white",
+                                  scale_high = "steelblue", scale_midpoint = 0, ...) {
+
+  mapping <- remap_mosaic_aes(mapping)
+
+  rect_layer <- ggplot2::layer(
+    geom = ggplot2::GeomRect,
+    mapping = mapping,
+    data = data,
+    stat = stat,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, spacing = spacing, ...)
+  )
+
+  out <- list(rect_layer)
+
+  if (label) {
+    text_layer <- ggplot2::layer(
+      stat = StatMosaicLabel,
+      data = data,
+      mapping = mapping,
+      geom = "text",
+      position = "identity",
+      show.legend = FALSE,
+      inherit.aes = inherit.aes,
+      params = list(na.rm = na.rm, spacing = spacing,
+                    min_label_width = min_label_width,
+                    min_label_height = min_label_height,
+                    size = label.size, colour = label.color)
+    )
+    out <- c(out, list(text_layer))
+  }
+
+  # Default fill scale -- still a normal ggplot2 scale object, so the user
+  # can override it the usual way: geom_mosaic_residual(...) +
+  # scale_fill_gradient2(...) (ggplot2 will just note the scale is being
+  # replaced). Passing a literal `fill = ` through `...` (like any ggplot2
+  # geom) hardcodes a constant colour instead, same as usual.
+  if (default_scale && !("fill" %in% names(list(...)))) {
+    out <- c(out, list(scale_fill_mosaic_residual(
+      low = scale_low, mid = scale_mid, high = scale_high, midpoint = scale_midpoint
+    )))
+  }
+
+  if (length(out) == 1) return(out[[1]])
+  out
+}
+```
+
+
+### testing example:
+
+```{r}
+# colors, spacing, and labels all come for free now -- no manual
+# scale_fill_gradient2() call needed, it's the default
+ggplot(small_games) +
+  geom_mosaic_residual(
+    aes(x = Genre, y = Platform),
+    spacing = 0.015,
+    min_label_width = 0.03,
+    min_label_height = 0.05,
+    label.size = 2.3
+  ) +
+  theme_minimal() +
+  labs(title = "Genre vs Platform (Pearson residuals)", x = NULL, y = NULL)
+```
+
+```{r}
+# the default scale is still overridable like any ggplot2 layer, and
+# labels keep working fine when you do -- the earlier disappearing-label
+# example was just because that demo had set label = FALSE, not a side
+# effect of overriding the scale itself
+ggplot(small_games) +
+  geom_mosaic_residual(
+    aes(x = Genre, y = Platform),
+    spacing = 0.015,
+    min_label_width = 0.03,
+    min_label_height = 0.05,
+    label.size = 2.3
+  ) +
+  scale_fill_gradient2(low = "purple", mid = "white", high = "darkgreen", midpoint = 0) +
+  theme_minimal() +
+  labs(title = "Genre vs Platform (custom override scale)", x = NULL, y = NULL)
+```
+

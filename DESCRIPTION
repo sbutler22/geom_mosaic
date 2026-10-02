@@ -2,7 +2,7 @@ Package: mosaicresid
 Type: Package
 Title: Residual-Shaded Mosaic Plots for 'ggplot2'
 Version: 0.1.0
-Authors@R: person("Your", "Name", email = "you@example.com", role = c("aut", "cre"))
+Authors@R: person("Sam", "Butler", email = "sambutle@andrew.cmu.edu", role = c("aut", "cre"))
 Description: A 'ggplot2'-native alternative to base R's mosaicplot(shade = TRUE).
     geom_mosaic_residual() takes two categorical variables mapped the same way
     as any other 'ggplot2' geom, aes(x =, y =), recursively partitions the
