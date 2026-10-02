@@ -36,10 +36,13 @@ but as an ordinary `ggplot2` layer, mapped the way every other `ggplot2`
 geom is mapped:
 
 ```{r}
-ggplot(mtcars) +
-  geom_mosaic_resid(aes(x = factor(cyl), y = factor(am))) +
+ggplot(infert) +
+  geom_mosaic_resid(
+    aes(x = factor(pmin(spontaneous, 2), labels = c("Zero", "One", "2 or more")),
+        y = factor(case, labels = c("Control", "Case")))) +
   theme_minimal() +
-  labs(title = "Cylinders vs Transmission", x = NULL, y = NULL)
+  labs(title = "Prior Spontaneous Abortions vs Infertility Case Status",
+       x = "Spontaneous abortions", y = NULL)
 ```
 
 That single call did everything base R's `mosaicplot(shade = TRUE)` does:
@@ -64,10 +67,7 @@ No manual `stat_*()` call, no manual residual computation, no manual scale.
 code path. One row per observation:
 
 ```{r}
-titanic_raw <- as.data.frame(Titanic)
-titanic_raw <- titanic_raw[rep(seq_len(nrow(titanic_raw)), titanic_raw$Freq), ]
-
-ggplot(titanic_raw) +
+ggplot(Titanic) +
   geom_mosaic_resid(aes(x = Class, y = Survived)) +
   theme_minimal()
 ```
