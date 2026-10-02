@@ -1,0 +1,110 @@
+---
+title: "mosaicresid vs base R mosaicplot() vs ggmosaic2"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{mosaicresid vs base R mosaicplot() vs ggmosaic2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## Why this document exists
+
+This package set out to fill a real, verifiable gap: at the time this
+project started, no actively-maintained, CRAN-available package offered
+`ggplot2`-native mosaic plots with statistical (residual-based) shading.
+The original `ggmosaic` package had no shading support at all and was
+archived in late 2025. Base R's `mosaicplot(shade = TRUE)` and the
+`vcd`/`vcdExtra` packages have shading, but are base-graphics, not
+grammar-of-graphics layers.
+
+Partway through this project, a new package -- **`ggmosaic2`** (Michael
+Friendly, with the original `ggmosaic` authors credited as co-authors),
+published to CRAN on 2026-09-16 -- closed much of that gap directly,
+including full n-way support. That is worth stating plainly rather than
+talking around: as a *production recommendation today*, `ggmosaic2` is the
+more complete package. This document exists to be honest about that, and to
+state exactly what is and isn't still different about this package, based
+on first-hand inspection of `ggmosaic2`'s source.
+
+## Feature-by-feature comparison
+
+| | Base R `mosaicplot()` | `ggmosaic2` (CRAN) | `mosaicresid` |
+|---|---|---|---|
+| **Input** | pre-built `table()` only | raw data + `aes(x = product(...))` | raw **or** pre-aggregated data, plain `aes(x =, y =)` |
+| **API idiom** | base graphics function call | `product()`-wrapped `ggplot2` aes | plain `ggplot2` aes, no wrapper |
+| **n-way support** | `margin` (loglinear model choice) | full, via `glm(poisson)` + formula/shortcut `expected =` | none -- explicit 2-way scope cut (see below) |
+| **Residual types** | pearson / deviance / FT | pearson only | pearson / deviance / FT (matches base R exactly) |
+| **Split direction** | `dir` override | `divider` (vspine/hspine/vbar/hbar -- 4 options) | `dir` override (v/h -- 2 options, a subset of their 4) |
+| **Default color scale** | discrete HSV bins | continuous `scale_fill_gradient2()` | continuous `scale_fill_gradient2()` -- same design choice, arrived at independently |
+| **Labels** | axis-side, fixed position | `ggrepel`-based collision handling | in-tile, size-threshold suppression |
+| **Composability** | none (base graphics) | full `ggplot2` (facets, themes, `+`) | full `ggplot2` (facets, themes, `+`) |
+| **Codebase** | 1 file, base R | ~3,500 lines, 20 files, 6 dependencies | 1 purpose, ~9 files, 4 dependencies |
+| **Extras** | -- | `facet_mosaic()`, plotly export, Shiny app | tidy intermediate output (`compute_mosaic_residuals()` returns an inspectable data frame) |
+
+## Is `aes(x =, y =)` vs `product()` a real differentiator?
+
+Yes, but as a trade-off, not an unqualified win.
+
+`ggplot2` only exposes two position-aesthetic slots. `ggmosaic2`'s
+`product()` exists specifically to pack an arbitrary-length variable list
+into the single `x` slot, so one interface scales from 1 variable up to n
+(plus `conds` for conditioning variables). `mosaicresid`'s plain
+`aes(x =, y =)` is more idiomatic -- it reads like every other `ggplot2`
+geom, with no wrapper function to learn -- but that simplicity is purchased
+by being two-variable-only. It would not generalize past two variables
+without introducing something `product()`-shaped of its own. The API
+difference and the n-way gap are, underneath, the same architectural
+decision, not two independent facts.
+
+So: a genuine, statable differentiator for the common two-variable case,
+not a categorical advantage.
+
+## Defending the one deliberate gap: n-way support
+
+This is the only gap left unclosed by design, rather than by oversight.
+Past two variables, "expected count" stops having a single unambiguous
+definition -- complete independence, joint independence, conditional
+independence, and all-two-way-associations are different, non-equivalent
+loglinear models, and the caller has to choose one. `mosaicresid` ships a
+narrow, well-defined two-way implementation, verified to floating-point
+precision against base R's own residual formulas (see the package's test
+suite, `tests/testthat/test-residuals.R`), with an explicit error that
+fails loudly rather than silently computing a plausible-looking but wrong
+number for an ambiguous n-way case -- naming `stats::loglin()` and
+`glm(family = poisson)` as the path forward. `ggmosaic2` ended up shipping
+exactly that `glm(family = poisson)` approach for its n-way support, which
+is a reasonable outside confirmation that the scoping judgment here was
+architecturally correct, even though this package doesn't implement it.
+
+## Everything else: closed
+
+Every other mechanical gap identified during development has been closed
+and verified:
+
+- **`dir`** (split direction override) -- implemented, matches base R's
+  default alternating behavior when unset, and verified to correctly swap
+  split roles when overridden.
+- **`type`** (pearson / deviance / Freeman-Tukey residuals) -- implemented
+  using base R's own formulas (read directly from
+  `graphics:::mosaicplot.default`), verified to match base R to
+  floating-point precision for all three.
+- **`sort`** -- turned out not to be a real gap once examined. Base R needs
+  `sort` because `x` is a fixed pre-built table; this package's
+  `aes(x =, y =)` mapping *is* the permutation mechanism base R's `sort`
+  provides after the fact -- swap which variable is `x` and which is `y`
+  to get the same effect, with no separate parameter needed.
+
+## Bottom line
+
+`ggmosaic2` is the more feature-complete package, and is the right choice
+for someone who needs n-way support, `ggrepel`-based label collision
+handling, or a Shiny app, in production, today. `mosaicresid` matches or
+exceeds it on the specific two-way, residual-shaded surface -- all three
+residual types where `ggmosaic2` has one, verified to base R's own formulas
+to the last bit -- with a simpler API and a fraction of the code, and
+remains a legitimate, from-scratch statement of what true mosaic-plot
+geometry and independence-residual shading look like as a `ggplot2` layer.

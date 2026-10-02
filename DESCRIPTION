@@ -1,0 +1,35 @@
+Package: mosaicresid
+Type: Package
+Title: Residual-Shaded Mosaic Plots for 'ggplot2'
+Version: 0.1.0
+Authors@R: person("Your", "Name", email = "you@example.com", role = c("aut", "cre"))
+Description: A 'ggplot2'-native alternative to base R's mosaicplot(shade = TRUE).
+    geom_mosaic_residual() takes two categorical variables mapped the same way
+    as any other 'ggplot2' geom, aes(x =, y =), recursively partitions the
+    unit square into tiles sized by their joint proportions (true mosaic-plot
+    geometry, not a heuristic approximation), computes Pearson (or deviance,
+    or Freeman-Tukey) residuals against a two-way independence model, and maps
+    the residual to fill color -- all automatically, as part of the stat, with
+    no manual computation required from the end user. Works on raw
+    (one-row-per-observation) or pre-aggregated (contingency-table) data
+    through the same code path, and the computed rectangle/residual table is
+    itself available as a tidy data frame via compute_mosaic_residuals().
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Imports:
+    ggplot2 (>= 3.4.0),
+    dplyr,
+    tibble,
+    purrr,
+    rlang
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://github.com/yourusername/mosaicresid
+BugReports: https://github.com/yourusername/mosaicresid/issues

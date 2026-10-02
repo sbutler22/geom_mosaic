@@ -1,0 +1,159 @@
+---
+title: "Getting Started with mosaicresid"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with mosaicresid}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+```{r setup}
+library(mosaicresid)
+library(ggplot2)
+```
+
+## Why this package exists
+
+Base R's `mosaicplot(shade = TRUE)` is a genuinely useful plot: tile area
+encodes joint proportion, and tile color encodes how far each cell departs
+from what independence would predict (a Pearson residual). But it's drawn
+with base graphics, so it can't be faceted, themed, or composed with other
+`ggplot2` layers, and it returns nothing you can inspect -- the numbers only
+ever reach a device.
+
+`mosaicresid` reproduces the same statistics and the same true mosaic
+geometry (recursive partitioning, not a grid-of-equal-cells approximation),
+but as an ordinary `ggplot2` layer, mapped the way every other `ggplot2`
+geom is mapped:
+
+```{r}
+ggplot(mtcars) +
+  geom_mosaic_residual(aes(x = factor(cyl), y = factor(am))) +
+  theme_minimal() +
+  labs(title = "Cylinders vs Transmission", x = NULL, y = NULL)
+```
+
+That single call did everything base R's `mosaicplot(shade = TRUE)` does:
+
+- **Sized** each tile by its joint proportion (true mosaic geometry: width
+  from the first variable's marginal split, height from the second
+  variable's split *conditional* on the first).
+- **Computed** a two-way independence model and the Pearson residual of each
+  cell against it.
+- **Colored** each tile by that residual, via a diverging red-white-blue
+  scale.
+- **Labeled** each tile in place, since the usual axis-tick labeling doesn't
+  work for a mosaic plot's inner variable (its split positions differ from
+  column to column -- there's no one shared axis position that's correct
+  for the whole plot).
+
+No manual `stat_*()` call, no manual residual computation, no manual scale.
+
+## Working with raw or pre-aggregated data
+
+`geom_mosaic_residual()` accepts either shape of input, through the same
+code path. One row per observation:
+
+```{r}
+titanic_raw <- as.data.frame(Titanic)
+titanic_raw <- titanic_raw[rep(seq_len(nrow(titanic_raw)), titanic_raw$Freq), ]
+
+ggplot(titanic_raw) +
+  geom_mosaic_residual(aes(x = Class, y = Survived)) +
+  theme_minimal()
+```
+
+Or already-aggregated counts, via `weight`:
+
+```{r}
+titanic_counts <- as.data.frame(Titanic)
+titanic_counts <- aggregate(Freq ~ Class + Survived, titanic_counts, sum)
+
+ggplot(titanic_counts) +
+  geom_mosaic_residual(aes(x = Class, y = Survived), weight = "Freq") +
+  theme_minimal()
+```
+
+(`weight` is passed through `...` to `stat_mosaic_residual()`/`stat_mosaic_label()`;
+it isn't a literal `geom_mosaic_residual()` argument, so it works the same way
+`weight` works for any other `ggplot2` stat.)
+
+## Overriding the color scale
+
+The default scale is an ordinary `ggplot2` scale object, so it overrides
+the usual way -- and labels keep working fine when you do:
+
+```{r}
+ggplot(mtcars) +
+  geom_mosaic_residual(aes(x = factor(cyl), y = factor(am))) +
+  scale_fill_gradient2(low = "purple", mid = "white", high = "darkgreen") +
+  theme_minimal()
+```
+
+## Spacing, labels, and small cells
+
+```{r}
+ggplot(mtcars) +
+  geom_mosaic_residual(
+    aes(x = factor(cyl), y = factor(gear)),
+    spacing = 0.02,
+    min_label_width = 0.04,
+    min_label_height = 0.06,
+    label.size = 2.5
+  ) +
+  theme_minimal() +
+  labs(title = "Cylinders vs Gears", x = NULL, y = NULL)
+```
+
+Cells smaller than `min_label_width`/`min_label_height` (in 0-1 fractional
+plot units) are still colored, just left unlabeled, rather than overflowing
+text across tile boundaries.
+
+## Matching base R's `dir` and `type` options
+
+Base R's `mosaicplot()` lets you force the split direction per variable
+(`dir`) and choose among three residual formulas (`type`). Both are
+supported here with the same semantics:
+
+```{r}
+ggplot(mtcars) +
+  geom_mosaic_residual(
+    aes(x = factor(cyl), y = factor(am)),
+    dir = c("h", "v"),   # swap which variable splits vertically first
+    type = "deviance"    # pearson (default), deviance, or FT (Freeman-Tukey)
+  ) +
+  theme_minimal()
+```
+
+## Inspecting the numbers directly
+
+Because the statistics are computed by a plain function, not hidden inside
+a device call, you can get the tile geometry and residuals as an ordinary
+data frame -- useful for checking the math, or for driving a completely
+custom plot:
+
+```{r}
+compute_mosaic_residuals(mtcars, "cyl", "am")
+```
+
+## What this package deliberately does not do
+
+`compute_mosaic_residuals()`/`add_independence_residuals()` only support
+two grouping variables. Past two variables, "expected count" stops having
+one unambiguous definition -- complete independence, joint independence,
+conditional independence, and all-two-way-associations are different,
+non-equivalent loglinear models, and the caller has to pick one. Rather
+than silently computing a plausible-looking but wrong number, calling these
+functions with more than two variables fails loudly and points toward
+`stats::loglin()`/`glm(family = poisson)` as the general-purpose tools for
+fitting a model you've chosen explicitly. See `vignette("comparison")` for
+how this scope decision compares to the alternatives.
