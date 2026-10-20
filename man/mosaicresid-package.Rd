@@ -30,17 +30,17 @@ usable standalone.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/yourusername/mosaicresid}
-  \item Report bugs at \url{https://github.com/yourusername/mosaicresid/issues}
+  \item \url{https://github.com/sbutler22/geom_mosaic}
+  \item Report bugs at \url{https://github.com/sbutler22/geom_mosaic/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Your Name \email{you@example.com}
+\strong{Maintainer}: Sam Butler \email{swmbutler@gmail.com}
 
 Authors:
 \itemize{
-  \item Your Name \email{you@example.com}
+  \item Sam Butler \email{swmbutler@gmail.com}
 }
 
 }

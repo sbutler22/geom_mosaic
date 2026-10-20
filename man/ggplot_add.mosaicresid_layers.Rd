@@ -4,7 +4,7 @@
 \alias{ggplot_add.mosaicresid_layers}
 \title{Add mosaicresid layers to a plot (ggplot2 < 4.0 entry point)}
 \usage{
-\method{ggplot_add}{mosaicresid_layers}(object, plot, object_name)
+\method{ggplot_add}{mosaicresid_layers}(object, plot, object_name, ...)
 }
 \arguments{
 \item{object}{A \code{mosaicresid_layers} list, as returned by
@@ -14,6 +14,9 @@
 
 \item{object_name}{The name of \code{object}, for error messages (required by
 the \code{ggplot_add()} generic's signature; unused here).}
+
+\item{...}{Unused; present for compatibility with the \code{ggplot_add()}
+generic, whose signature differs between ggplot2 versions.}
 }
 \value{
 The updated \code{ggplot} object.

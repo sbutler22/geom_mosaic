@@ -49,10 +49,12 @@ add_mosaicresid_layers <- function(object, plot) {
 #' @param plot The `ggplot` object being added to.
 #' @param object_name The name of `object`, for error messages (required by
 #'   the `ggplot_add()` generic's signature; unused here).
+#' @param ... Unused; present for compatibility with the `ggplot_add()`
+#'   generic, whose signature differs between ggplot2 versions.
 #' @return The updated `ggplot` object.
 #' @importFrom ggplot2 ggplot_add
 #' @method ggplot_add mosaicresid_layers
 #' @export
-ggplot_add.mosaicresid_layers <- function(object, plot, object_name) {
+ggplot_add.mosaicresid_layers <- function(object, plot, object_name, ...) {
   add_mosaicresid_layers(object, plot)
 }
