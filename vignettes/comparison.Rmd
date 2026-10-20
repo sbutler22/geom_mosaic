@@ -24,11 +24,9 @@ grammar-of-graphics layers.
 Partway through this project, a new package -- **`ggmosaic2`** (Michael
 Friendly, with the original `ggmosaic` authors credited as co-authors),
 published to CRAN on 2026-09-16 -- closed much of that gap directly,
-including full n-way support. That is worth stating plainly rather than
-talking around: as a *production recommendation today*, `ggmosaic2` is the
+including full n-way support. As a *production recommendation today*, `ggmosaic2` is the
 more complete package. This document exists to be honest about that, and to
-state exactly what is and isn't still different about this package, based
-on first-hand inspection of `ggmosaic2`'s source.
+state exactly what is and isn't different about this package.
 
 ## Feature-by-feature comparison
 
@@ -56,12 +54,7 @@ into the single `x` slot, so one interface scales from 1 variable up to n
 `aes(x =, y =)` is more idiomatic -- it reads like every other `ggplot2`
 geom, with no wrapper function to learn -- but that simplicity is purchased
 by being two-variable-only. It would not generalize past two variables
-without introducing something `product()`-shaped of its own. The API
-difference and the n-way gap are, underneath, the same architectural
-decision, not two independent facts.
-
-So: a genuine, statable differentiator for the common two-variable case,
-not a categorical advantage.
+without introducing something `product()`-shaped of its own. 
 
 ## Defending the one deliberate gap: n-way support
 

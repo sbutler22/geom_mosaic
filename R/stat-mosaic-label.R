@@ -21,6 +21,7 @@
 StatMosaicLabel <- ggplot2::ggproto("StatMosaicLabel", ggplot2::Stat,
 
   required_aes = c("catx", "caty"),
+  optional_aes = "weight",
 
   compute_panel = function(data, scales, spacing = 0.01,
                             min_label_width = 0.02, min_label_height = 0.03,

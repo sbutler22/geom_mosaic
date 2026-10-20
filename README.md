@@ -46,3 +46,14 @@ devtools::install_local("path/to/mosaicresid")
 ## License
 
 MIT
+
+## Use of AI
+
+This package was developed with substantial help from Claude (Anthropic),
+used as a coding assistant. Claude drafted much of the R code, roxygen
+documentation, tests, and vignette text, and helped debug issues such as
+compatibility with ggplot2 4.0. I directed the design (including the
+`aes(x =, y =)` interface, the two-variable scope, and the default color
+scale), reviewed and tested the code, chose the example datasets, and
+edited the documentation. The residual calculations are checked against
+base R's own `mosaicplot()` formulas in the package's test suite.

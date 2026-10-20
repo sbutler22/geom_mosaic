@@ -55,10 +55,16 @@ to_long_counts <- function(data, x, y, weight = NULL) {
   # falls through to summing an (empty) weight vector, giving 0 for every
   # row. Passing a truly bare `NULL` (by omitting `wt` entirely) or a real
   # column reference are the only two cases that behave correctly.
+  # `.drop = FALSE` keeps every x/y combination, including ones with zero
+  # observations (e.g. no 8-cylinder, 4-gear cars in mtcars). Without it,
+  # empty cells silently vanish from the table -- which breaks the 2-way
+  # completeness check downstream and doesn't match base R, where
+  # table()/mosaicplot() keep empty cells as zero-count tiles.
   if (is.null(weight)) {
-    result <- dplyr::count(data, .data[[x]], .data[[y]], name = count_var)
+    result <- dplyr::count(data, .data[[x]], .data[[y]], name = count_var, .drop = FALSE)
   } else {
-    result <- dplyr::count(data, .data[[x]], .data[[y]], wt = .data[[weight]], name = count_var)
+    result <- dplyr::count(data, .data[[x]], .data[[y]], wt = .data[[weight]],
+                           name = count_var, .drop = FALSE)
   }
 
   names(result)[names(result) == count_var] <- "n"

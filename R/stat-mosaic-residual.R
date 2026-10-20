@@ -11,6 +11,7 @@
 StatMosaicResidual <- ggplot2::ggproto("StatMosaicResidual", ggplot2::Stat,
 
   required_aes = c("catx", "caty"),
+  optional_aes = "weight",
 
   # so users get residual-based fill for free, without writing
   # aes(fill = after_stat(residual)) themselves

@@ -111,3 +111,22 @@ test_that("`..mosaic_n..` as a variable name is rejected with a clear error", {
   names(df)[1] <- "..mosaic_n.."
   expect_error(to_long_counts(df, "..mosaic_n..", "cat2"), "reserved")
 })
+
+test_that("empty (zero-count) cells are kept and match base R, not dropped", {
+  # mtcars has no 8-cylinder, 4-gear cars
+  res <- compute_mosaic_residuals(mtcars, "cyl", "gear")
+  expect_equal(nrow(res), 9)
+  expect_equal(res$n[res$cyl == "8" & res$gear == "4"], 0)
+
+  tbl <- table(mtcars$cyl, mtcars$gear)
+  E <- stats::loglin(tbl, margin = list(1, 2), fit = TRUE, print = FALSE)$fit
+  base <- (tbl - E) / sqrt(E)
+  diffs <- vapply(seq_len(nrow(res)), function(i) {
+    res$residual[i] - base[as.character(res$cyl[i]), as.character(res$gear[i])]
+  }, numeric(1))
+  expect_lt(max(abs(diffs)), 1e-9)
+
+  for (t in c("deviance", "FT")) {
+    expect_false(any(is.na(compute_mosaic_residuals(mtcars, "cyl", "gear", type = t)$residual)))
+  }
+})
