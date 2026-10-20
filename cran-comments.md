@@ -6,9 +6,8 @@
 
 ## Test environments
 
-* local macOS, R 4.6
+* local macOS (aarch64), R 4.6.1
 * win-builder (R-devel)
-* R-hub (linux, windows, macos)
 
 ## Notes
 
