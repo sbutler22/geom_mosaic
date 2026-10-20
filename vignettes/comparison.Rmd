@@ -40,7 +40,7 @@ state exactly what is and isn't different about this package.
 | **Default color scale** | discrete HSV bins | continuous `scale_fill_gradient2()` | continuous `scale_fill_gradient2()` -- same design choice, arrived at independently |
 | **Labels** | axis-side, fixed position | `ggrepel`-based collision handling | in-tile, size-threshold suppression |
 | **Composability** | none (base graphics) | full `ggplot2` (facets, themes, `+`) | full `ggplot2` (facets, themes, `+`) |
-| **Codebase** | 1 file, base R | ~3,500 lines, 20 files, 6 dependencies | 1 purpose, ~9 files, 4 dependencies |
+| **Codebase** | 1 function, base R | ~3,500 lines, 21 files, 9 imported packages | ~800 lines, 13 files, 5 imported packages |
 | **Extras** | -- | `facet_mosaic()`, plotly export, Shiny app | tidy intermediate output (`compute_mosaic_residuals()` returns an inspectable data frame) |
 
 ## Is `aes(x =, y =)` vs `product()` a real differentiator?

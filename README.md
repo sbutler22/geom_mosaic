@@ -6,8 +6,8 @@ A `ggplot2`-native alternative to base R's `mosaicplot(shade = TRUE)`.
 library(mosaicresid)
 library(ggplot2)
 
-ggplot(mtcars) +
-  geom_mosaic_resid(aes(x = factor(cyl), y = factor(am))) +
+ggplot(Titanic) +
+  geom_mosaic_resid(aes(x = Class, y = Survived)) +
   theme_minimal()
 ```
 
@@ -32,8 +32,9 @@ via `compute_mosaic_residuals()`.
 ## Installation
 
 ```r
-# not yet on CRAN
-devtools::install_local("path/to/mosaicresid")
+# development version from GitHub
+# install.packages("remotes")
+remotes::install_github("sbutler22/geom_mosaic")
 ```
 
 ## Documentation
