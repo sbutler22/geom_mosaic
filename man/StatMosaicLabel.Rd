@@ -3,6 +3,15 @@
 \name{StatMosaicLabel}
 \alias{StatMosaicLabel}
 \title{StatMosaicLabel}
+\value{
+A \code{ggproto} object of class \code{StatMosaicLabel} (inheriting from
+\link[ggplot2:Stat]{ggplot2::Stat}). It is not called directly; it is the \code{stat} used by
+\code{\link[=stat_mosaic_label]{stat_mosaic_label()}} and by the label layer of \code{\link[=geom_mosaic_resid]{geom_mosaic_resid()}}.
+During plot building it returns one row per labeled tile, with the
+tile's center (\code{x}, \code{y}) and its \code{label} text (the \code{x} and \code{y}
+categories on two lines). Tiles smaller than \code{min_label_width} or
+\code{min_label_height} are left out.
+}
 \description{
 Computes label text + centroid position for each mosaic cell, so category
 names can be drawn directly inside their rectangles. This sidesteps a

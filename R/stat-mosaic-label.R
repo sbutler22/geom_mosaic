@@ -17,6 +17,13 @@
 #'
 #' @format NULL
 #' @usage NULL
+#' @return A `ggproto` object of class `StatMosaicLabel` (inheriting from
+#'   [ggplot2::Stat]). It is not called directly; it is the `stat` used by
+#'   [stat_mosaic_label()] and by the label layer of [geom_mosaic_resid()].
+#'   During plot building it returns one row per labeled tile, with the
+#'   tile's center (`x`, `y`) and its `label` text (the `x` and `y`
+#'   categories on two lines). Tiles smaller than `min_label_width` or
+#'   `min_label_height` are left out.
 #' @export
 StatMosaicLabel <- ggplot2::ggproto("StatMosaicLabel", ggplot2::Stat,
 
@@ -70,6 +77,10 @@ StatMosaicLabel <- ggplot2::ggproto("StatMosaicLabel", ggplot2::Stat,
 #'   direction per level -- must match whatever `dir` was passed to the
 #'   paired `stat_mosaic_residual()`/`geom_mosaic_resid()` call, so
 #'   labels land on the same rectangles. `NULL` (default) alternates v/h.
+#' @return A `ggplot2` layer object (class `LayerInstance`) that can be
+#'   added to a plot with `+`. When the plot is built, the layer writes each
+#'   tile's `x` and `y` category names at the center of that tile, skipping
+#'   tiles too small to hold the text.
 #' @export
 #' @examples
 #' library(ggplot2)

@@ -3,6 +3,15 @@
 \name{StatMosaicResidual}
 \alias{StatMosaicResidual}
 \title{StatMosaicResidual}
+\value{
+A \code{ggproto} object of class \code{StatMosaicResidual} (inheriting
+from \link[ggplot2:Stat]{ggplot2::Stat}). It is not called directly; it is the \code{stat}
+used by \code{\link[=stat_mosaic_residual]{stat_mosaic_residual()}} and \code{\link[=geom_mosaic_resid]{geom_mosaic_resid()}}. During
+plot building it returns one row per combination of the \code{x} and \code{y}
+categories, with tile bounds \code{xmin}, \code{xmax}, \code{ymin}, \code{ymax} (in 0-1
+plot units), the cell count \code{n}, the \code{expected} count under
+independence, and the \code{residual} used for the fill color.
+}
 \description{
 Takes discrete \code{catx}/\code{caty} aesthetics (and optional \code{weight}), computes
 mosaic rectangles + independence residuals, and hands

@@ -125,6 +125,12 @@ lists which parameters it can accept.
 \link[ggplot2:draw_key]{key glyphs}, to change the display of the layer in the legend.
 }}
 }
+\value{
+A \code{ggplot2} layer object (class \code{LayerInstance}) that can be
+added to a plot with \code{+}. When the plot is built, the layer writes each
+tile's \code{x} and \code{y} category names at the center of that tile, skipping
+tiles too small to hold the text.
+}
 \description{
 The stat underlying \code{\link[=geom_mosaic_resid]{geom_mosaic_resid()}}'s in-tile category labels.
 Use this directly if you want the labels without the default rectangles

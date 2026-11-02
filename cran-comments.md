@@ -1,3 +1,13 @@
+## Resubmission
+
+This is a resubmission. In this version I have:
+
+* Added \value sections (via roxygen `@return`) to the documentation of
+  all exported functions and objects, describing the class and meaning of
+  what each returns. This covers the files flagged in review:
+  stat_mosaic_label.Rd, stat_mosaic_residual.Rd, StatMosaicLabel.Rd, and
+  StatMosaicResidual.Rd.
+
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note

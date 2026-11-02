@@ -7,6 +7,13 @@
 #'
 #' @format NULL
 #' @usage NULL
+#' @return A `ggproto` object of class `StatMosaicResidual` (inheriting
+#'   from [ggplot2::Stat]). It is not called directly; it is the `stat`
+#'   used by [stat_mosaic_residual()] and [geom_mosaic_resid()]. During
+#'   plot building it returns one row per combination of the `x` and `y`
+#'   categories, with tile bounds `xmin`, `xmax`, `ymin`, `ymax` (in 0-1
+#'   plot units), the cell count `n`, the `expected` count under
+#'   independence, and the `residual` used for the fill color.
 #' @export
 StatMosaicResidual <- ggplot2::ggproto("StatMosaicResidual", ggplot2::Stat,
 
@@ -50,6 +57,12 @@ StatMosaicResidual <- ggplot2::ggproto("StatMosaicResidual", ggplot2::Stat,
 #'   alternates v/h starting with v, same as base R's default.
 #' @param type Residual formula: `"pearson"` (default), `"deviance"`, or
 #'   `"FT"` (Freeman-Tukey), matching base R's `mosaicplot(type = )`.
+#' @return A `ggplot2` layer object (class `LayerInstance`) that can be
+#'   added to a plot with `+`. When the plot is built, the layer draws one
+#'   tile per combination of the `x` and `y` categories, sized by that
+#'   combination's share of the total count and filled by its residual
+#'   against a two-way independence model (positive = more observations
+#'   than independence predicts, negative = fewer).
 #' @export
 #' @examples
 #' library(ggplot2)

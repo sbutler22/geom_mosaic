@@ -120,6 +120,14 @@ lists which parameters it can accept.
 \link[ggplot2:draw_key]{key glyphs}, to change the display of the layer in the legend.
 }}
 }
+\value{
+A \code{ggplot2} layer object (class \code{LayerInstance}) that can be
+added to a plot with \code{+}. When the plot is built, the layer draws one
+tile per combination of the \code{x} and \code{y} categories, sized by that
+combination's share of the total count and filled by its residual
+against a two-way independence model (positive = more observations
+than independence predicts, negative = fewer).
+}
 \description{
 The stat underlying \code{\link[=geom_mosaic_resid]{geom_mosaic_resid()}}'s rectangles. Use this
 directly if you want to pair the mosaic-residual computation with a geom
